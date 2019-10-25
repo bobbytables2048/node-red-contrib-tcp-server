@@ -4,10 +4,11 @@
 ![npm](https://img.shields.io/npm/v/node-red-contrib-tcp-server)
 ![npm](https://img.shields.io/npm/dm/node-red-contrib-tcp-server)
 
-Work in progress of a **TCP Server** 
+Work in progress of a dynamic **TCP Server** 
 
 ## How it works:
 
+![node configuration](https://raw.githubusercontent.com/tiagordc/node-red-contrib-tcp-server/master/edit.png)
 
 ## To install: 
 

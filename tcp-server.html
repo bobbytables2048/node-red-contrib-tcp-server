@@ -3,12 +3,16 @@
     <div class="form-row">
         <label for="node-input-action"><i class="fa fa-tag"></i> Action</label>
         <input type="text" id="node-input-action" placeholder="" style="width: 70%;">
-        <span style="display: block; padding-left: 106px; color: gray; font-size: x-small;">Available actions: Listen, Close, Write and Kill</span>
+        <span style="display: block; padding-left: 106px; color: gray; font-size: x-small;">Available actions: Listen, Write and Close</span>
         <input type="hidden" id="node-input-actionType">
     </div>
 
+    <hr/>
+
+    <div class="form-row">On <b>listen</b>:</div>
+
     <div class="form-row">
-        <label for="node-input-port"><i class="fa fa-globe"></i> Port</label>
+        <label for="node-input-port"><i class="fa fa-random"></i> Port</label>
         <input type="text" id="node-input-port" style="width:70%;" />
         <input type="hidden" id="node-input-portType">
     </div>
@@ -55,11 +59,47 @@
         </label>
     </div>
 
+    <hr/>
+
+    <div class="form-row">On <b>write</b>:</div>
+
     <div class="form-row">
-        <label for="node-input-write"><i class="fa fa-pencil"></i> Write</label>
+        <label for="node-input-write"><i class="fa fa-pencil"></i> Message</label>
         <input type="text" id="node-input-write" style="width:70%;" />
         <input type="hidden" id="node-input-writeType">
     </div>
+
+    <div class="form-row">
+        <label for="node-input-writeHost"><i class="fa fa-globe"></i> Address</label>
+        <input type="text" id="node-input-writeHost" style="width:70%;" />
+        <span style="display: block; padding-left: 106px; color: gray; font-size: x-small;">Leave empty to write to all open connections</span>
+        <input type="hidden" id="node-input-writeHostType">
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-writePort"><i class="fa fa-random"></i> Port</label>
+        <input type="text" id="node-input-writePort" style="width:70%;" />
+        <input type="hidden" id="node-input-writePortType">
+    </div>
+
+    <hr/>
+
+    <div class="form-row">On <b>close</b>:</div>
+
+    <div class="form-row">
+        <label for="node-input-closeHost"><i class="fa fa-globe"></i> Address</label>
+        <input type="text" id="node-input-closeHost" style="width:70%;" />
+        <span style="display: block; padding-left: 106px; color: gray; font-size: x-small;">Leave empty to close all open connections and kill the server instance</span>
+        <input type="hidden" id="node-input-closeHostType">
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-closePort"><i class="fa fa-random"></i> Port</label>
+        <input type="text" id="node-input-closePort" style="width:70%;" />
+        <input type="hidden" id="node-input-closePortType">
+    </div>
+
+    <hr/>
 
     <div class="form-row">
         <label for="node-input-topic"><i class="fa fa-tags"></i> Topic</label>
@@ -79,7 +119,7 @@
 
     <h3>Inputs</h3>
     <dl class="message-properties">
-        <dt>action<span class="property-type">listen | close | write | kill</span></dt>
+        <dt>action<span class="property-type">listen | write | close</span></dt>
         <dd> the action to perform </dd>
     </dl>
 
@@ -91,8 +131,10 @@
         category: 'network',
         color: '#cc66ff',
         defaults: {
+
             action: { value: "Listen", required: true, validate: RED.validators.typedInput("actionType") },
             actionType: { value: "str" },
+
             port: { value: "payload", required: true, validate: RED.validators.typedInput("portType") },
             portType: { value: "msg" },
             datamode: { value: "stream" },
@@ -104,10 +146,22 @@
             xmlArray: { value: false },
             xmlNormalizeTags: { value: false },
             xmlNormalize: { value: false },
+
             write: { value: "", required: false, validate: RED.validators.typedInput("writeType") },
             writeType: { value: "str" },
+            writeHost: { value: "", required: false, validate: RED.validators.typedInput("writeHostType") },
+            writeHostType: { value: "str" },
+            writePort: { value: "", required: false, validate: RED.validators.typedInput("writePortType") },
+            writePortType: { value: "str" },
+
+            closeHost: { value: "", required: false, validate: RED.validators.typedInput("closeHostType") },
+            closeHostType: { value: "str" },
+            closePort: { value: "", required: false, validate: RED.validators.typedInput("closePortType") },
+            closePortType: { value: "str" },
+
             topic: { value: "" },
             name: { value: "" }
+
         },
         inputs: 1,
         outputs: 1,
@@ -145,47 +199,40 @@
                 }
 
             };
+            var buildTypedInput = function(types, defType, prop) {
+
+                var propType = this[`${prop}Type`];
+
+                if (defType === 'str') {
+                    if (propType == null || propType === 'string' || propType === 'none') {
+                        this[`${prop}Type`] = 'str';
+                    }
+                }
+
+                propType = this[`${prop}Type`];
+
+                $(`#node-input-${prop}Type`).val(propType);
+
+                $(`#node-input-${prop}`).typedInput({
+                    default: defType,
+                    typeField: $(`#node-input-${prop}Type`),
+                    types: types
+                });
+
+            };
 
             updateOptions();
 
             $("#node-input-datatype").change(updateOptions);
             $("#node-input-datamode").change(updateOptions);
 
-            if (this.actionType == null || this.actionType === 'string' || this.actionType === 'none') {
-                this.actionType = "str";
-            }
-
-            $("#node-input-actionType").val(this.actionType);
-
-            $("#node-input-action").typedInput({
-                default: 'str',
-                typeField: $("#node-input-actionType"),
-                types: ['str', 'msg', 'flow', 'global', 'env']
-            });
-
-            if (this.portType == null || this.portType === 'string' || this.portType === 'none') {
-                this.portType = "str";
-            }
-
-            $("#node-input-portType").val(this.portType);
-
-            $("#node-input-port").typedInput({
-                default: 'str',
-                typeField: $("#node-input-portType"),
-                types: ['str', 'msg', 'flow', 'global', 'env']
-            });
-
-            if (this.writeType == null || this.writeType === 'string' || this.writeType === 'none') {
-                this.writeType = "str";
-            }
-
-            $("#node-input-writeType").val(this.writeType);
-
-            $("#node-input-write").typedInput({
-                default: 'str',
-                typeField: $("#node-input-writeType"),
-                types: ['str', 'msg', 'flow', 'global', 'env']
-            });
+            buildTypedInput(['str', 'msg', 'flow', 'global', 'env'], 'str', 'action');
+            buildTypedInput(['str', 'msg', 'flow', 'global', 'env'], 'str', 'port');
+            buildTypedInput(['str', 'msg', 'flow', 'global'], 'str', 'write');
+            buildTypedInput(['str', 'msg', 'flow', 'global'], 'str', 'writeHost');
+            buildTypedInput(['str', 'msg', 'flow', 'global'], 'str', 'writePort');
+            buildTypedInput(['str', 'msg', 'flow', 'global'], 'str', 'closeHost');
+            buildTypedInput(['str', 'msg', 'flow', 'global'], 'str', 'closePort');
 
         }
     });

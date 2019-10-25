@@ -11,7 +11,7 @@ module.exports = function (RED) {
 
         RED.nodes.createNode(this, config);
 
-        this.action = config.action || "listen"; /* listen,close,write,kill */
+        this.action = config.action || "listen"; /* listen,close,write */
         this.port = config.port * 1;
         this.topic = config.topic;
         this.stream = (!config.datamode || config.datamode=='stream'); /* stream,single*/
