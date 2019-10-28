@@ -6,6 +6,8 @@
 
 Work in progress of a dynamic **TCP Server** 
 
+![node configuration](https://raw.githubusercontent.com/tiagordc/node-red-contrib-tcp-server/master/flow.png)
+
 ## How it works:
 
 ![node configuration](https://raw.githubusercontent.com/tiagordc/node-red-contrib-tcp-server/master/edit.png)

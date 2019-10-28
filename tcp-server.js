@@ -22,6 +22,23 @@ module.exports = function (RED) {
         
         var connectionPool = {};
         var server;
+
+        var findConnection = function(addr, port) {
+
+            var id = null;
+
+            for (var connId in connectionPool) {
+                if (connectionPool.hasOwnProperty(connId)) {
+                    if (connectionPool[connId].socket.remoteAddress == addr && connectionPool[connId].socket.remotePort == port) {
+                        id = connId;
+                        break;
+                    }
+                }
+            }
+
+            return id;
+            
+        };
 		
         node.on('input', function (msg, nodeSend, nodeDone) {
 
@@ -153,14 +170,95 @@ module.exports = function (RED) {
             };
 
             var close = () => {
-                //close by remote address and port
+
+                var closeHost = node.closeHost;
+                var closePort = node.closePort;
+
+                if (config.closeHostType === 'msg' || config.closeHostType === 'flow' || config.closeHostType === 'global') {
+                    closeHost = RED.util.evaluateNodeProperty(config.closeHost, config.closeHostType, this, msg);
+                }
+
+                if (config.closePortType === 'msg' || config.closePortType === 'flow' || config.closePortType === 'global') {
+                    closePort = RED.util.evaluateNodeProperty(config.closePort, config.closePortType, this, msg);
+                }
+
+                if (closeHost && closePort) {
+
+                    var closeId = findConnection(closeHost, closePort);
+
+                    if (closeId) {
+    
+                        var socket = connectionPool[closeId].socket;
+                        socket.end();
+                        socket.destroy();
+                        socket.unref();
+    
+                        delete connectionPool[closeId];
+    
+                    }
+
+                }
+                
             };
 
             var write = () => {
 
+                var writeMsg = config.write;
+
+                if (config.writeType === 'msg' || config.writeType === 'flow' || config.writeType === 'global') {
+                    writeMsg = RED.util.evaluateNodeProperty(config.write, config.writeType, this, msg);
+                }
+
+                if (writeMsg == null) return;
+
+                var writeHost = node.writeHost;
+                var writePort = node.closePort;
+
+                if (config.writeHostType === 'msg' || config.writeHostType === 'flow' || config.writeHostType === 'global') {
+                    writeHost = RED.util.evaluateNodeProperty(config.writeHost, config.writeHostType, this, msg);
+                }
+
+                if (config.writePortType === 'msg' || config.writePortType === 'flow' || config.writePortType === 'global') {
+                    writePort = RED.util.evaluateNodeProperty(config.writePort, config.writePortType, this, msg);
+                }
+
+                if (writeHost && writePort) {
+
+                    var writeId = findConnection(writeHost, writePort);
+
+                    if (writeId) {
+    
+                        var socket = connectionPool[writeId].socket;
+                   
+                        if (Buffer.isBuffer(writeMsg)) {
+                            socket.write(writeMsg);
+                        } else if (typeof writeMsg === "string" && node.datatype == 'base64') {
+                            socket.write(Buffer.from(writeMsg, 'base64'));
+                        } else {
+                            socket.write(Buffer.from("" + writeMsg));
+                        }
+
+                    }
+
+                }
+
             };
 
             var kill = () => {
+
+                if (server) {
+
+                    for (var connId in connectionPool) {
+                        var socket = connectionPool[connId].socket;
+                        socket.end();
+                        socket.destroy();
+                        socket.unref();
+                    }
+    
+                    connectionPool = {};
+                    server.close();
+
+                }
 
             };
 
@@ -193,18 +291,20 @@ module.exports = function (RED) {
 
             };
             
-            switch (node.action.toLowerCase()) {
-                case 'close':
-                    close();
-                    break;
-                case 'write':
-                    write();
-                    break;
-                case 'kill':
-                    kill();
-                    break;
-                default:
-                    listen();
+            if (node.action) {
+                switch (node.action.toLowerCase()) {
+                    case 'close':
+                        close();
+                        break;
+                    case 'write':
+                        write();
+                        break;
+                    case 'kill':
+                        kill();
+                        break;
+                    default:
+                        listen();
+                }
             }
 
         });

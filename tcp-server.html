@@ -119,7 +119,7 @@
 
     <h3>Inputs</h3>
     <dl class="message-properties">
-        <dt>action<span class="property-type">listen | write | close</span></dt>
+        <dt>action<span class="property-type">listen | write | close | kill</span></dt>
         <dd> the action to perform </dd>
     </dl>
 
@@ -171,6 +171,8 @@
         },
         oneditprepare: function () {
 
+            var ctx = this;
+
             var updateOptions = function () {
 
                 var datamode = $("#node-input-datamode").val();
@@ -199,25 +201,26 @@
                 }
 
             };
-            var buildTypedInput = function(types, defType, prop) {
+            var typedInput = function(prop, types, defType) {
 
-                var propType = this[`${prop}Type`];
+                var propTypeName = prop + "Type";
+                var propTypeValue = ctx[propTypeName];
 
                 if (defType === 'str') {
-                    if (propType == null || propType === 'string' || propType === 'none') {
-                        this[`${prop}Type`] = 'str';
+                    if (propTypeValue == null || propTypeValue === 'string' || propTypeValue === 'none') {
+                        ctx[`${prop}Type`] = 'str';
                     }
                 }
 
-                propType = this[`${prop}Type`];
+                propTypeValue = ctx[propTypeName];
 
-                $(`#node-input-${prop}Type`).val(propType);
+                $('#node-input-' + propTypeName).val(propTypeValue);
 
-                $(`#node-input-${prop}`).typedInput({
-                    default: defType,
-                    typeField: $(`#node-input-${prop}Type`),
-                    types: types
-                });
+                var evalInContext = function() {
+                    eval("$('#node-input-" + prop + "').typedInput({ default: '" + defType + "', typeField: $('#node-input-" + propTypeName + "'), types: " + JSON.stringify(types) + " });");
+                };
+
+                evalInContext.call(ctx);
 
             };
 
@@ -226,13 +229,13 @@
             $("#node-input-datatype").change(updateOptions);
             $("#node-input-datamode").change(updateOptions);
 
-            buildTypedInput(['str', 'msg', 'flow', 'global', 'env'], 'str', 'action');
-            buildTypedInput(['str', 'msg', 'flow', 'global', 'env'], 'str', 'port');
-            buildTypedInput(['str', 'msg', 'flow', 'global'], 'str', 'write');
-            buildTypedInput(['str', 'msg', 'flow', 'global'], 'str', 'writeHost');
-            buildTypedInput(['str', 'msg', 'flow', 'global'], 'str', 'writePort');
-            buildTypedInput(['str', 'msg', 'flow', 'global'], 'str', 'closeHost');
-            buildTypedInput(['str', 'msg', 'flow', 'global'], 'str', 'closePort');
+            typedInput('action', ['str', 'msg', 'flow', 'global', 'env'], 'str');
+            typedInput('port', ['str', 'msg', 'flow', 'global', 'env'], 'str');
+            typedInput('write', ['str', 'msg', 'flow', 'global'], 'str');
+            typedInput('writeHost', ['str', 'msg', 'flow', 'global'], 'str');
+            typedInput('writePort', ['str', 'msg', 'flow', 'global'], 'str');
+            typedInput('closeHost', ['str', 'msg', 'flow', 'global'], 'str');
+            typedInput('closePort', ['str', 'msg', 'flow', 'global'], 'str');
 
         }
     });
