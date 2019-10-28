@@ -4,9 +4,13 @@
 ![npm](https://img.shields.io/npm/v/node-red-contrib-tcp-server)
 ![npm](https://img.shields.io/npm/dm/node-red-contrib-tcp-server)
 
-Work in progress of a dynamic **TCP Server** 
+This node is a dynamic **TCP Server** that can be created from passed arguments rather than static values.
 
 ![node configuration](https://raw.githubusercontent.com/tiagordc/node-red-contrib-tcp-server/master/flow.png)
+
+This project was developed specifically for XML over TCP with some parsing options but other formats should still be supported.
+
+To report an issue use the project [GitHub](https://github.com/tiagordc/node-red-contrib-tcp-server/issues) page
 
 ## How it works:
 
